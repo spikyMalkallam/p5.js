@@ -644,7 +644,7 @@ p5.prototype._handleMotion = function() {
     this._setProperty('deviceOrientation', 'undefined');
   }
   const context = this._isGlobal ? window : this;
-  if (typeof context.deviceMoved === 'function') {
+  if (typeof context.deviceMoved === 'function') { // &&(navigator.userAgent.toLowerCase().includes('firefox')
     if (
       Math.abs(this.accelerationX - this.pAccelerationX) > move_threshold ||
       Math.abs(this.accelerationY - this.pAccelerationY) > move_threshold ||
@@ -738,6 +738,30 @@ p5.prototype._handleMotion = function() {
       context.deviceShaken();
     }
   }
-};
 
-export default p5;
+  if (typeof DeviceMotionEvent.requestPermission === 'function' &&
+    typeof DeviceOrientationEvent.requestPermission === 'function'
+  ) {
+    // request permission for detecting motions
+    let button;
+    button = context.createButton('Permission');
+    button.size(innerWidth * 6 / 8, innerHeight / 8);
+    button.position(innerWidth / 2 - button.width / 2, innerHeight / 2);
+    button.mousePressed(() => {
+      DeviceMotionEvent.requestPermission()
+      .then(response => {
+          if (response === 'granted') {
+            window.addEventListener('devicemotion', ondevicemotion, true);
+          }
+        });
+
+      DeviceOrientationEvent.requestPermission().then(response => {
+          if (response === 'granted') {
+            window.addEventListener('deviceorientation', ondeviceorientation, true)
+          }
+        })
+        .catch(console.error)
+    });
+    export default p5;
+  }
+}
