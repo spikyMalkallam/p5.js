@@ -644,10 +644,10 @@ p5.prototype._handleMotion = function() {
     this._setProperty('deviceOrientation', 'undefined');
   }
   const context = this._isGlobal ? window : this;
-  // if browser is firefox, ask for permission
+  // detect whether the browser is Firefox
   if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
     alert('this is firefox');
-    if (typeof context.requestPermission === 'function' &&
+    if (typeof DeviceMotionEvent.requestPermission === 'function' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
       // request permission for detecting motions
       let button;
