@@ -654,114 +654,117 @@ p5.prototype._handleMotion = function() {
     }
   }
 
-  if (typeof context.deviceTurned === 'function') {
-    // The angles given by rotationX etc is from range -180 to 180.
-    // The following will convert them to 0 to 360 for ease of calculation
-    // of cases when the angles wrapped around.
-    // _startAngleX will be converted back at the end and updated.
-    const wRX = this.rotationX + 180;
-    const wPRX = this.pRotationX + 180;
-    let wSAX = startAngleX + 180;
-    if ((wRX - wPRX > 0 && wRX - wPRX < 270) || wRX - wPRX < -270) {
-      rotateDirectionX = 'clockwise';
-    } else if (wRX - wPRX < 0 || wRX - wPRX > 270) {
-      rotateDirectionX = 'counter-clockwise';
-    }
-    if (rotateDirectionX !== this.pRotateDirectionX) {
-      wSAX = wRX;
-    }
-    if (Math.abs(wRX - wSAX) > 90 && Math.abs(wRX - wSAX) < 270) {
-      wSAX = wRX;
-      this._setProperty('turnAxis', 'X');
-      context.deviceTurned();
-    }
-    this.pRotateDirectionX = rotateDirectionX;
-    startAngleX = wSAX - 180;
+  // if browser is firefox, ask for permission
+  if(navigator.userAgent.toLowerCase().indexOf('firefox') > -1){
+    alert("this is firefox");
 
-    // Y-axis is identical to X-axis except for changing some names.
-    const wRY = this.rotationY + 180;
-    const wPRY = this.pRotationY + 180;
-    let wSAY = startAngleY + 180;
-    if ((wRY - wPRY > 0 && wRY - wPRY < 270) || wRY - wPRY < -270) {
-      rotateDirectionY = 'clockwise';
-    } else if (wRY - wPRY < 0 || wRY - this.pRotationY > 270) {
-      rotateDirectionY = 'counter-clockwise';
-    }
-    if (rotateDirectionY !== this.pRotateDirectionY) {
-      wSAY = wRY;
-    }
-    if (Math.abs(wRY - wSAY) > 90 && Math.abs(wRY - wSAY) < 270) {
-      wSAY = wRY;
-      this._setProperty('turnAxis', 'Y');
-      context.deviceTurned();
-    }
-    this.pRotateDirectionY = rotateDirectionY;
-    startAngleY = wSAY - 180;
-
-    // Z-axis is already in the range 0 to 360
-    // so no conversion is needed.
-    if (
-      (this.rotationZ - this.pRotationZ > 0 &&
-        this.rotationZ - this.pRotationZ < 270) ||
-      this.rotationZ - this.pRotationZ < -270
+    if (typeof DeviceMotionEvent.requestPermission === 'function' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'
     ) {
-      rotateDirectionZ = 'clockwise';
-    } else if (
-      this.rotationZ - this.pRotationZ < 0 ||
-      this.rotationZ - this.pRotationZ > 270
-    ) {
-      rotateDirectionZ = 'counter-clockwise';
-    }
-    if (rotateDirectionZ !== this.pRotateDirectionZ) {
-      startAngleZ = this.rotationZ;
-    }
-    if (
-      Math.abs(this.rotationZ - startAngleZ) > 90 &&
-      Math.abs(this.rotationZ - startAngleZ) < 270
-    ) {
-      startAngleZ = this.rotationZ;
-      this._setProperty('turnAxis', 'Z');
-      context.deviceTurned();
-    }
-    this.pRotateDirectionZ = rotateDirectionZ;
-    this._setProperty('turnAxis', undefined);
-  }
-  if (typeof context.deviceShaken === 'function') {
-    let accelerationChangeX;
-    let accelerationChangeY;
-    // Add accelerationChangeZ if acceleration change on Z is needed
-    if (this.pAccelerationX !== null) {
-      accelerationChangeX = Math.abs(this.accelerationX - this.pAccelerationX);
-      accelerationChangeY = Math.abs(this.accelerationY - this.pAccelerationY);
-    }
-    if (accelerationChangeX + accelerationChangeY > shake_threshold) {
-      context.deviceShaken();
-    }
-  }
+      // request permission for detecting motions
+      let button;
+      button = context.createButton('Permission');
+      button.size(innerWidth * 6 / 8, innerHeight / 8);
+      button.position(innerWidth / 2 - button.width / 2, innerHeight / 2);
+      button.mousePressed(() => {
+        DeviceMotionEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('devicemotion', ondevicemotion, true);
+            }
+          });
 
-  if (typeof DeviceMotionEvent.requestPermission === 'function' &&
-    typeof DeviceOrientationEvent.requestPermission === 'function'
-  ) {
-    // request permission for detecting motions
-    let button;
-    button = context.createButton('Permission');
-    button.size(innerWidth * 6 / 8, innerHeight / 8);
-    button.position(innerWidth / 2 - button.width / 2, innerHeight / 2);
-    button.mousePressed(() => {
-      DeviceMotionEvent.requestPermission()
-      .then(response => {
-          if (response === 'granted') {
-            window.addEventListener('devicemotion', ondevicemotion, true);
-          }
-        });
-
-      DeviceOrientationEvent.requestPermission().then(response => {
+        DeviceOrientationEvent.requestPermission().then(response => {
           if (response === 'granted') {
             window.addEventListener('deviceorientation', ondeviceorientation, true)
           }
         })
-        .catch(console.error)
-    });
+          .catch(console.error)
+      });
+    }
+
+    if (typeof context.deviceTurned === 'function') {
+      // The angles given by rotationX etc is from range -180 to 180.
+      // The following will convert them to 0 to 360 for ease of calculation
+      // of cases when the angles wrapped around.
+      // _startAngleX will be converted back at the end and updated.
+      const wRX = this.rotationX + 180;
+      const wPRX = this.pRotationX + 180;
+      let wSAX = startAngleX + 180;
+      if ((wRX - wPRX > 0 && wRX - wPRX < 270) || wRX - wPRX < -270) {
+        rotateDirectionX = 'clockwise';
+      } else if (wRX - wPRX < 0 || wRX - wPRX > 270) {
+        rotateDirectionX = 'counter-clockwise';
+      }
+      if (rotateDirectionX !== this.pRotateDirectionX) {
+        wSAX = wRX;
+      }
+      if (Math.abs(wRX - wSAX) > 90 && Math.abs(wRX - wSAX) < 270) {
+        wSAX = wRX;
+        this._setProperty('turnAxis', 'X');
+        context.deviceTurned();
+      }
+      this.pRotateDirectionX = rotateDirectionX;
+      startAngleX = wSAX - 180;
+      // Y-axis is identical to X-axis except for changing some names.
+      const wRY = this.rotationY + 180;
+      const wPRY = this.pRotationY + 180;
+      let wSAY = startAngleY + 180;
+      if ((wRY - wPRY > 0 && wRY - wPRY < 270) || wRY - wPRY < -270) {
+        rotateDirectionY = 'clockwise';
+      } else if (wRY - wPRY < 0 || wRY - this.pRotationY > 270) {
+        rotateDirectionY = 'counter-clockwise';
+      }
+      if (rotateDirectionY !== this.pRotateDirectionY) {
+        wSAY = wRY;
+      }
+      if (Math.abs(wRY - wSAY) > 90 && Math.abs(wRY - wSAY) < 270) {
+        wSAY = wRY;
+        this._setProperty('turnAxis', 'Y');
+        context.deviceTurned();
+      }
+      this.pRotateDirectionY = rotateDirectionY;
+      startAngleY = wSAY - 180;
+      // Z-axis is already in the range 0 to 360
+      // so no conversion is needed.
+      if (
+        (this.rotationZ - this.pRotationZ > 0 &&
+          this.rotationZ - this.pRotationZ < 270) ||
+        this.rotationZ - this.pRotationZ < -270
+      ) {
+        rotateDirectionZ = 'clockwise';
+      } else if (
+        this.rotationZ - this.pRotationZ < 0 ||
+        this.rotationZ - this.pRotationZ > 270
+      ) {
+        rotateDirectionZ = 'counter-clockwise';
+      }
+      if (rotateDirectionZ !== this.pRotateDirectionZ) {
+        startAngleZ = this.rotationZ;
+      }
+      if (
+        Math.abs(this.rotationZ - startAngleZ) > 90 &&
+        Math.abs(this.rotationZ - startAngleZ) < 270
+      ) {
+        startAngleZ = this.rotationZ;
+        this._setProperty('turnAxis', 'Z');
+        context.deviceTurned();
+      }
+      this.pRotateDirectionZ = rotateDirectionZ;
+      this._setProperty('turnAxis', undefined);
+    }
+    if (typeof context.deviceShaken === 'function') {
+      let accelerationChangeX;
+      let accelerationChangeY;
+      // Add accelerationChangeZ if acceleration change on Z is needed
+      if (this.pAccelerationX !== null) {
+        accelerationChangeX = Math.abs(this.accelerationX - this.pAccelerationX);
+        accelerationChangeY = Math.abs(this.accelerationY - this.pAccelerationY);
+      }
+      if (accelerationChangeX + accelerationChangeY > shake_threshold) {
+        context.deviceShaken();
+      }
+    }
     export default p5;
   }
 }
