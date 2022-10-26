@@ -643,15 +643,14 @@ p5.prototype._handleMotion = function() {
   } else if (window.orientation === undefined) {
     this._setProperty('deviceOrientation', 'undefined');
   }
-
+  const context = this._isGlobal ? window : this;
   // if browser is firefox, ask for permission
   if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
     alert('this is firefox');
-    if (typeof DeviceMotionEvent.requestPermission === 'function' &&
+    if (typeof context.requestPermission === 'function' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
       // request permission for detecting motions
       let button;
-      // eslint-disable-next-line no-use-before-define
       button = context.createButton('Permission');
       button.size(innerWidth * 6 / 8, innerHeight / 8);
       button.position(innerWidth / 2 - button.width / 2, innerHeight / 2);
@@ -671,7 +670,6 @@ p5.prototype._handleMotion = function() {
       });
     }
   }
-  const context = this._isGlobal ? window : this;
   if (typeof context.deviceMoved === 'function') {
     if (
       Math.abs(this.accelerationX - this.pAccelerationX) > move_threshold ||
